@@ -1,1 +1,310 @@
+Students.html
+------------
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:text-align="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Student Management System</title>
+    <style>
+        h1 {text-align: center;}
+        p {text-align: center;}
+        div {text-align: center;}
+        body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #333; }
+        header { display:flex; align-items:center; justify-content:space-between; }
+        h1 { margin: 0; font-size: 1.4rem; }
+        .add-btn { background:#2d9cdb; color:#fff; padding:8px 12px; text-decoration:none; border-radius:4px; }
+        .container { margin-top: 18px; }
+        table { border-collapse: collapse; width:100%; max-width:1000px; }
+        th, td { padding: 10px 12px; border: 1px solid #e0e0e0; text-align: left; }
+        th { background:#f7f7f7; }
+        tr:nth-child(even) { background:#fbfbfb; }
+        .actions a { margin-right:8px; padding:6px 8px; border-radius:4px; text-decoration:none; color:#fff; font-size:0.9rem; }
+        .actions .modify { background: #28a745; } /* green */
+        .actions .delete { background: #dc3545; } /* red */
+        .no-records { color: #666; margin-top: 12px; }
 
+        /* pagination styles */
+        .pagination { display:flex; list-style:none; padding:0; gap:6px; justify-content:center; margin-top:18px; }
+        .pagination a { display:inline-block; padding:6px 10px; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; }
+        .pagination a.active { background:#2d9cdb; color:#fff; border-color:#2d9cdb; }
+        .pagination a.disabled { color:#aaa; pointer-events:none; border-color:#eee; }
+    </style>
+</head>
+<body>
+<style>
+    header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+    }
+    .add-btn {
+        display: inline-block;
+        margin-top: 10px;
+    }
+</style>
+
+<header>
+    <div>
+        <h1>Student Management System</h1>
+    </div>
+    <a th:href="@{/students/add(page=${currentPage})}" class="add-btn">+ Add Student</a>
+</header>
+
+<div class="container">
+    <h2>Student List</h2>
+
+    <div th:if="${#lists.isEmpty(students)}">
+        <p class="no-records">No students found. Use <a th:href="@{/students/add}">Add Student</a> to create one.</p>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(students)}">
+        <table align="center">
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Course</th>
+                <th style="width:180px">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="student : ${students}">
+                <td th:text="${student.id}">Id</td>
+                <td th:text="${student.name}">Name</td>
+                <td th:text="${student.email}">Email</td>
+                <td th:text="${student.course}">Course</td>
+                <td class="actions">
+                    <a th:href="@{/students/update/{id}(id=${student.id}, page=${currentPage})}" class="modify">Modify</a>
+                    <a th:href="@{/students/delete/{id}(id=${student.id}, page=${currentPage})}"
+                       class="delete"
+                       onclick="return confirm('Are you sure you want to delete this student?');">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- pagination controls -->
+        <div>
+            <ul class="pagination">
+                <li>
+                    <a th:classappend="${currentPage == 0} ? 'disabled' : ''"
+                       th:href="@{/students(page=${currentPage - 1}, size=${pageSize})}">Previous</a>
+                </li>
+
+                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a th:href="@{/students(page=${i}, size=${pageSize})}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == currentPage} ? 'active' : ''">1</a>
+                </li>
+
+                <li>
+                    <a th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+                       th:href="@{/students(page=${currentPage + 1}, size=${pageSize})}">Next</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+Add student.html
+---------------
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Student</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+        }
+
+        .container {
+            width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h2>Add Student</h2>
+
+    <form th:action="@{/students/save}" th:object="${student}" method="post">
+        <label>Name</label>
+        <input type="text"
+               th:field="*{name}"
+               placeholder="Enter student name"
+               required
+               minlength="4"
+               maxlength="16"
+               pattern="^[A-Za-z]+( [A-Za-z]+){0,3}$"
+               title="Name must be 4-16 letters" />
+        <label>Email</label>
+        <input type="email"
+               th:field="*{email}"
+               placeholder="Enter email"
+               required
+               pattern= "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.(com|in|org)$"
+               title="Enter a valid email address" />
+        <div th:if="${#fields.hasErrors('email')}"
+             th:errors="*{email}"
+             style="color:red;">
+        </div>
+        <label>Course</label>
+        <select th:field="*{course}" required>
+            <option value="">-- Select Course --</option>
+            <option value="Java">Java</option>
+            <option value="Spring Boot">Spring Boot</option>
+            <option value="React">React</option>
+            <option value="Python">Python</option>
+            <option value="Gen AI">Gen AI</option>
+        </select>
+        <button type="submit" class="btn">Save Student</button>
+    </form>
+
+    <div>
+        <a th:href="@{/students}">Back to Student List</a>
+    </div>
+</div>
+</body>
+</html>
+
+update.html
+------------
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Student</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+        }
+
+        .container {
+            width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #1e7e34;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h2>Update Student</h2>
+
+    <form th:action="@{/students/save}" th:object="${student}" method="post">
+
+        <!-- Hidden ID -->
+        <input type="hidden" th:field="*{id}" />
+
+        <label>Name</label>
+        <input type="text" th:field="*{name}" required />
+
+        <label>Email</label>
+        <input type="email" th:field="*{email}" required />
+
+        <label>Course</label>
+        <input type="text" th:field="*{course}" required />
+
+        <button type="submit" class="btn">Update Student</button>
+    </form>
+
+    <div>
+        <a th:href="@{/students}">Back to Student List</a>
+    </div>
+</div>
+</body>
+</html>
