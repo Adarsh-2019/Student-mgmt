@@ -1,1 +1,87 @@
+package com.lkm.service;
+
+import com.lkm.entity.StudentDTO;
+import com.lkm.entity.StudentEntity;
+import com.lkm.exception.StudentNotFoundException;
+import com.lkm.repo.StudentRepository;
+import com.lkm.utils.ConverterUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+@Slf4j
+@Service
+public class StudentService {
+
+
+    private final StudentRepository repository;
+
+    @Autowired
+    public StudentService(StudentRepository repository) {
+        this.repository = repository;
+    }
+
+    //save student
+    public void saveStudent(StudentDTO studentDTO) {
+        log.info("Saving student: {}", studentDTO);
+        StudentEntity studentEntity = ConverterUtils.convertDTOToEntity(studentDTO);
+        log.info("Converted StudentEntity: {}", studentEntity);
+        repository.save(studentEntity);
+    }
+
+    //get all students
+    public List<StudentDTO> getAllStudents() {
+        log.info("Fetching all students");
+        List<StudentEntity> studentEntities = repository.findAll();
+        log.info("Found {} students", studentEntities.size());
+        return studentEntities.stream()
+                .map(ConverterUtils::convertEntityToDTO)
+                .toList();
+    }
+
+    // pagination: get a page of students
+    public Page<StudentDTO> getStudentsPage(int page, int size) {
+        log.info("Fetching students page: {}, size: {}", page, size);
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
+        log.info("Constructed Pageable: {}", pageable);
+        return repository.findAll(pageable)
+                .map(ConverterUtils::convertEntityToDTO);
+    }
+
+    //get student by id
+    public StudentDTO getStudentById(Long id) {
+        StudentEntity studentEntity = repository.findById(id).orElseThrow(()-> new StudentNotFoundException("Student not found with id: " + id));
+      log.info("find student with id {}: {}", id, studentEntity);
+       ConverterUtils.convertEntityToDTO(studentEntity);
+       log.info("Converted StudentDTO: {}", ConverterUtils.convertEntityToDTO(studentEntity));
+        return ConverterUtils.convertEntityToDTO(studentEntity);
+    }
+
+    //update student
+    public StudentDTO updateStudent(Long id, StudentDTO studentDTO) {
+        StudentEntity existingStudent = repository.findById(id).orElseThrow(()-> new StudentNotFoundException("Student not found with id: " + id));
+        log.info("Updating student with id {}: {}", id, existingStudent);
+        existingStudent.setName(studentDTO.getName());
+        existingStudent.setEmail(studentDTO.getEmail());
+        existingStudent.setCourse(studentDTO.getCourse());
+        repository.save(existingStudent);
+        log.info("Updated StudentEntity: {}", existingStudent);
+        return ConverterUtils.convertEntityToDTO(existingStudent);
+    }
+
+    //delete student by id
+    public void deleteStudentById(Long id) {
+        StudentEntity existingStudent = repository.findById(id).orElseThrow(()-> new StudentNotFoundException("Student not found with id: " + id));
+       log.info("Deleting student with id {}: {}", id, existingStudent);
+        repository.delete(existingStudent);
+        ResponseEntity.ok().body("Student deleted successfully with id: " + id);
+    }
+
+}
 
